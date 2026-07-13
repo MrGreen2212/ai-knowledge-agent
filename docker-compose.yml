@@ -1,0 +1,16 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: ai-knowledge-api
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - ./app:/app/app
+
+    restart: unless-stopped
+
