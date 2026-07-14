@@ -7,3 +7,6 @@ psycopg2-binary==2.9.12
 minio==7.2.15
 python-multipart==0.0.20
 alembic>=1.9.0
+chromadb>=0.4.8
+fastembed>=0.4.3
+pypdf>=3.16.0
