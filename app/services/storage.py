@@ -1,7 +1,7 @@
 import uuid
 from io import BytesIO
 from typing import Any, Dict, IO
-
+from app.exceptions.storage import FileUploadError, FileDownloadError
 from minio import Minio
 from minio.error import S3Error
 
@@ -63,8 +63,9 @@ class StorageService:
                 "size": len(file_data)
             }
         except S3Error as err:
-            print(f"Ошибка при загрузке в MinIO: {err}")
-            raise
+            raise FileUploadError(
+                f"Не удалось загрузить файл '{original_filename}' в хранилище."
+            ) from err
 
     def get_file(self, object_name: str) -> bytes:
         """
@@ -81,5 +82,7 @@ class StorageService:
             
             return file_data
         except S3Error as err:
-            print(f"Ошибка при чтении из MinIO: {err}")
-            raise
+            raise FileDownloadError(
+                f"Не удалось получить файл '{object_name}' из хранилища."
+            ) from err
+       

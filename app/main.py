@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.documents import router as documents_router
-
+from app.exceptions.handlers import register_exception_handlers
 
 def create_startup_event():
     """Функция для инициализации внешних ресурсов при старте."""
@@ -26,7 +26,7 @@ app = FastAPI(
     title="AI Knowledge Agent",
     lifespan=lifespan  # Подключаем наш контекст
 )
-
+register_exception_handlers(app)
 
 @app.get("/")
 def read_root():

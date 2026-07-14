@@ -3,6 +3,7 @@ uvicorn[standard]==0.35.0
 python-dotenv==1.1.1
 
 sqlalchemy==2.0.43
-psycopg2-binary==2.9.10
+psycopg2-binary==2.9.12
 minio==7.2.15
 python-multipart==0.0.20
+alembic>=1.9.0
