@@ -2,6 +2,7 @@ import json
 from typing import List, Dict, Optional
 
 # Импортируем наши сервисы
+from .text_extraction_service import TextExtractionService
 from .storage import StorageService
 from .embedding_service import EmbeddingService
 from .vector_db import VectorDatabaseService
@@ -26,7 +27,7 @@ class RAGService:
         self.storage = StorageService()
         self.embedding = EmbeddingService()
         self.vector_db = VectorDatabaseService()
-        self.document_service = DocumentService()
+        self.text_extractor = TextExtractionService()
 
     def process_document(
         self,
@@ -43,7 +44,7 @@ class RAGService:
 
         file_data = self.storage.get_file(object_name)
 
-        text = self.document_service._extract_text(file_data=file_data, filename=object_name)
+        text = self.text_extractor.extract(file_data=file_data, filename=object_name)
 
         if not text.strip():
             raise ValueError("Не удалось извлечь текст из документа.")
