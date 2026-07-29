@@ -8,9 +8,7 @@ def main():
     rag = get_rag_service()
 
     print("Инициализируем векторную базу...")
-    rag.vector_db.create_collection()
-    print(rag.vector_db.client.list_collections())
-
+    
     INDEX_DOCUMENT = False
 
     if INDEX_DOCUMENT:
