@@ -1,64 +1,39 @@
+import logging
 from typing import List, Optional, Dict, Any, Sequence
 
 import chromadb
 
+logger = logging.getLogger(__name__)
+
 
 class VectorDatabaseService:
-    """Сервис для работы с векторной базой данных."""
+    """Сервис для работы с векторной базой данных ChromaDB."""
 
     def __init__(self):
-        # Локальное хранилище ChromaDB в папке .chroma/
         self.client = chromadb.PersistentClient(path=".chroma")
+        self.collection_name = "knowledge_base"
+        self._ensure_collection()
 
-    def create_collection(self) -> None:
-        """
-        Создаёт или получает существующую коллекцию документов.
-        
-        Args: нет
-        Returns: ничего (None)
+    def _ensure_collection(self) -> None:
+        """Создает или получает существующую коллекцию."""
+        if self.collection_name in [c.name for c in self.client.list_collections()]:
+            logger.info(f"Collection already exists: {self.collection_name}")
+        else:
+            logger.info(f"Creating collection: {self.collection_name}")
 
-        Notes:
-            - Указываем пространство расстояний "cosine" как оптимальное для текстов.
-            - Параметр get_or_create=True гарантирует корректное поведение при повторном запуске.
-              Если коллекция уже существует, она будет использована с текущими параметрами.
-            - embedding_function=None говорит ChromaDB, что мы будем передавать готовые вектора,
-              а не использовать встроенные модели.
-        """
-        collection_name = "knowledge_base"
-    
-        if collection_name in [c.name for c in self.client.list_collections()]:
-            print(f"Коллекция {collection_name} уже существует.")
-
-        # type: ignore[reportGeneralTypeIssues]
-        self.collection = self.client.create_collection(
-            name=collection_name,
+        self.collection = self.client.get_or_create_collection(
+            name=self.collection_name,
             metadata={"hnsw:space": "cosine"},
-            get_or_create=True,
-            embedding_function=None
         )
 
-    # Подавляем ошибки типа для методов библиотеки ChromaDB
-    # type: ignore[reportGeneralTypeIssues]
     def add_documents(
         self,
-        texts: Sequence[str],          # Текстовые фрагменты идут сюда
+        texts: Sequence[str],
         embeddings: Sequence[Sequence[float]],
-        ids: Sequence[str],  
-        metadatas: Optional[Sequence[Dict[str, Any]]] = None 
+        ids: Sequence[str],
+        metadatas: Optional[Sequence[Dict[str, Any]]] = None,
     ) -> None:
-        """
-        Добавляет документы в существующую коллекцию.
-        
-        Args:
-            texts: Списки строк — тексты чанков.
-            embeddings: Список списков чисел (вектора).
-            ids: Список уникальных ID каждого чанка текста.
-            metadatas: Опционально, метаданные.
-            
-        Проверки:
-            Длина всех массивов должна совпадать!
-        """
-
+        """Добавляет документы в коллекцию."""
         assert len(embeddings) == len(ids), (
             f"Длина векторов ({len(embeddings)}) "
             f"и id ({len(ids)}) должны совпадать."
@@ -68,38 +43,27 @@ class VectorDatabaseService:
             f"должно совпадать с количеством ID ({len(ids)})."
         )
 
-        # Если метаданные не переданы, создаем пустые словари
         if not metadatas:
             metadatas = [{}] * len(embeddings)
 
-        # Сохраняем тексты в стандартное поле documents
-        collection = self.client.get_collection("knowledge_base")  
-        collection.add(  
-            documents=texts,      # <-- Передаём тексты напрямую
+        self.collection.add(
+            documents=texts,
             embeddings=embeddings,
             ids=ids,
-            metadatas=metadatas
+            metadatas=metadatas,
         )
 
-    # Подавляем проблемы с опциональными объектами при поиске
-    # type: ignore[reportOptionalSubscript]
-    def query(
-        self,
-        embedding: list[float],
-        limit: int = 5
-    ) -> list[dict]:
+        logger.info(f"Added {len(ids)} documents to collection")
 
-        collection = self.client.get_collection("knowledge_base")
-        print(f"Всего документов в Chroma: {collection.count()}")
-
-        raw = collection.query(
+    def query(self, embedding: list[float], limit: int = 5) -> list[dict]:
+        """Выполняет поиск по векторному представлению."""
+        raw = self.collection.query(
             query_embeddings=[embedding],
             n_results=limit,
-            include=["documents", "distances", "metadatas"]
+            include=["documents", "distances", "metadatas"],
         )
 
         results = []
-
         ids = raw["ids"][0]
         docs = raw["documents"][0]
         distances = raw["distances"][0]
@@ -111,8 +75,10 @@ class VectorDatabaseService:
                     "id": ids[i],
                     "score": float(distances[i]),
                     "text": docs[i],
-                    "metadata": metas[i]
+                    "metadata": metas[i],
                 }
             )
+
+        logger.debug(f"Query returned {len(results)} results")
 
         return results

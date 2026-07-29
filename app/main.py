@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -5,34 +6,41 @@ from fastapi import FastAPI
 from app.api.documents import router as documents_router
 from app.exceptions.handlers import register_exception_handlers
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
+logger = logging.getLogger(__name__)
+
+
 def create_startup_event():
-    """Функция для инициализации внешних ресурсов при старте."""
+    """Инициализация внешних ресурсов при старте."""
     from app.services.storage import create_bucket
+
     create_bucket()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Современный обработчик событий жизненного цикла FastAPI.
-    Выполняется один раз при запуске сервера.
-    """
+    """Обработчик событий жизненного цикла FastAPI."""
+    logger.info("Starting AI Knowledge Agent...")
     create_startup_event()
     yield
-    # Здесь можно будет добавить логику закрытия соединений при shutdown
+    logger.info("Shutting down AI Knowledge Agent...")
 
 
 app = FastAPI(
     title="AI Knowledge Agent",
-    lifespan=lifespan  # Подключаем наш контекст
+    lifespan=lifespan,
 )
+
 register_exception_handlers(app)
+
 
 @app.get("/")
 def read_root():
-    return {
-        "message": "AI Knowledge Agent"
-    }
+    return {"message": "AI Knowledge Agent"}
 
-# Регистрируем роутер
+
 app.include_router(documents_router)

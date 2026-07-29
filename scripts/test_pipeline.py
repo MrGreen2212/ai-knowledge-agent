@@ -1,41 +1,36 @@
-from app.services.rag_service import RAGService
+from app.core.dependencies import get_rag_service
 
-# Имя файла должно быть точным именем объекта в MinIO (без лишних параметров)
 OBJECT_NAME = "9047339c-0557-45f8-a7d8-a81ff3aa7442.pdf"
 
+
 def main():
-    # Создаём единый сервис, который управляет всем пайплайном
-    rag = RAGService()
+
+    rag = get_rag_service()
 
     print("Инициализируем векторную базу...")
-    # Если коллекция уже существует, она будет просто использована
     rag.vector_db.create_collection()
+    print(rag.vector_db.client.list_collections())
 
-    # Индексировать документ только при необходимости
     INDEX_DOCUMENT = False
 
     if INDEX_DOCUMENT:
+        print(f"\n🔥 Индексация документа {OBJECT_NAME}...")
+        rag.process_document(OBJECT_NAME)
 
-        try:
-            # Полная индексация документа: загрузка → текст → эмбеддинги → сохранение
-            print(f"\n🔥 Индексация документа {OBJECT_NAME}...")
-            rag.process_document(OBJECT_NAME)  # <-- Всё происходит здесь!
-        except Exception as e:
-            print(f"Ошибка при индексировании: {e}")
-    
     while True:
+
         query = input("\nВведите вопрос ('exit' для выхода): ")
-        
-        if query.lower().strip() == "exit":
+
+        if query.lower() == "exit":
             break
 
-        results = rag.search(query=query)
+        results = rag.search(query)
 
-        # Выводим результаты поиска по смыслу запроса
-        for result in results:
-            print("=" * 80)
-            print(f"Score: {result['score']:.4f}")
-            print(result["text"][:800])
+        for i, result in enumerate(results):
+            print("-" * 80)
+            print(f"{i + 1}. Схожесть: {result['score']:.4f}")
+            print(result["text"])
+            print(result["metadata"]["object_name"])
 
 if __name__ == "__main__":
     main()

@@ -4,6 +4,7 @@ from app.models.document import Document
 
 
 class DocumentRepository:
+    """Репозиторий для работы с документами в PostgreSQL."""
 
     def create(
         self,
@@ -13,7 +14,7 @@ class DocumentRepository:
         content_type: str,
         size: int,
     ) -> Document:
-
+        """Создает запись о документе в базе данных."""
         document = Document(
             filename=filename,
             object_name=object_name,
