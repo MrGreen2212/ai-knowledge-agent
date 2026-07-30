@@ -3,6 +3,7 @@ from app.repositories.document_repository import DocumentRepository
 from app.services.document_service import DocumentService
 from app.services.document_workflow_service import DocumentWorkflowService
 from app.services.embedding_service import EmbeddingService
+from app.services.ollama_service import OllamaService
 from app.services.rag_service import RAGService
 from app.services.storage import StorageService
 from app.services.text_extraction_service import TextExtractionService
@@ -44,3 +45,8 @@ def get_document_workflow_service() -> DocumentWorkflowService:
         document_service=get_document_service(),
         rag_service=get_rag_service(),
     )
+
+
+def get_ollama_service() -> OllamaService:
+    """Создает экземпляр OllamaService."""
+    return OllamaService()
