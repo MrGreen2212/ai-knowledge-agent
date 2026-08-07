@@ -1,5 +1,9 @@
 from logging.config import fileConfig
 from app.core.database import Base
+# Импортировать все модели для autogenerate
+from app.models.conversation import Conversation
+from app.models.message import Message
+from app.models.document import Document
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 

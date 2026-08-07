@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.conversations import router as conversations_router
 from app.api.documents import router as documents_router
 from app.exceptions.handlers import register_exception_handlers
 
@@ -16,9 +17,9 @@ logger = logging.getLogger(__name__)
 
 def create_startup_event():
     """Инициализация внешних ресурсов при старте."""
-    from app.services.storage import create_bucket
+    from app.core.dependencies import get_storage_provider
 
-    create_bucket()
+    get_storage_provider()
 
 
 @asynccontextmanager
@@ -43,4 +44,5 @@ def read_root():
     return {"message": "AI Knowledge Agent"}
 
 
+app.include_router(conversations_router)
 app.include_router(documents_router)

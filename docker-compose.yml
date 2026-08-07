@@ -71,13 +71,19 @@ services:
   ollama:
     image: ollama/ollama
 
+    environment:
+      OLLAMA_HOST: "0.0.0.0:11434"
+      OLLAMA_KEEP_ALIVE: "-1"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_NUM_PARALLEL: "1"
+
     container_name: ai-knowledge-ollama
 
     ports:
-      - "11434:11434"
+    - "11434:11434"
 
     volumes:
-      - ollama_data:/root/.ollama
+    - ollama_data:/root/.ollama
 
     restart: unless-stopped
 

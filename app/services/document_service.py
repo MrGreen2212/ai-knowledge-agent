@@ -4,18 +4,18 @@ from typing import Any, Dict
 from sqlalchemy.orm import Session
 
 from app.repositories.document_repository import DocumentRepository
-from app.services.storage import StorageService
+from app.services.providers import StorageProvider
 
 logger = logging.getLogger(__name__)
 
 
 class DocumentService:
-    """Сервис для работы с документами (MinIO + PostgreSQL)."""
+    """Сервис для работы с документами (Storage + PostgreSQL)."""
 
     def __init__(
         self,
         repository: DocumentRepository,
-        storage: StorageService,
+        storage: StorageProvider,
     ):
         self.repository = repository
         self.storage = storage

@@ -5,15 +5,15 @@ from app.exceptions.document import (
     DocumentNotFound,
     DocumentProcessingError,
 )
-from app.exceptions.storage import (
-    FileDownloadError,
-    FileUploadError,
+from app.exceptions.providers import (
+    StorageDownloadError,
+    StorageUploadError,
 )
 
 
 async def upload_error_handler(
     request: Request,
-    exc: FileUploadError,
+    exc: StorageUploadError,
 ) -> JSONResponse:
     return JSONResponse(
         status_code=500,
@@ -26,7 +26,7 @@ async def upload_error_handler(
 
 async def download_error_handler(
     request: Request,
-    exc: FileDownloadError,
+    exc: StorageDownloadError,
 ) -> JSONResponse:
     return JSONResponse(
         status_code=500,
@@ -67,12 +67,12 @@ def register_exception_handlers(app: FastAPI) -> None:
     """Регистрация глобальных обработчиков исключений."""
 
     app.add_exception_handler(
-        FileUploadError,
+        StorageUploadError,
         upload_error_handler, # type: ignore
     )
 
     app.add_exception_handler(
-        FileDownloadError,
+        StorageDownloadError,
         download_error_handler, # type: ignore
     )
 
