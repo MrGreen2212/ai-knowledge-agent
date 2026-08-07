@@ -1,14 +1,46 @@
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+
+from app.api.documents import router as documents_router
+from app.exceptions.handlers import register_exception_handlers
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
+logger = logging.getLogger(__name__)
+
+
+def create_startup_event():
+    """Инициализация внешних ресурсов при старте."""
+    from app.services.storage import create_bucket
+
+    create_bucket()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Обработчик событий жизненного цикла FastAPI."""
+    logger.info("Starting AI Knowledge Agent...")
+    create_startup_event()
+    yield
+    logger.info("Shutting down AI Knowledge Agent...")
+
 
 app = FastAPI(
     title="AI Knowledge Agent",
-    description="Personal AI knowledge assistant",
-    version="0.1.0"
+    lifespan=lifespan,
 )
 
+register_exception_handlers(app)
+
+
 @app.get("/")
-def root():
-    return {
-        "status": "ok",
-        "message": "AI Knowledge Agent is running"
-    }
+def read_root():
+    return {"message": "AI Knowledge Agent"}
+
+
+app.include_router(documents_router)

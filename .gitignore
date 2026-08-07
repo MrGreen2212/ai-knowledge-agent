@@ -21,3 +21,7 @@ Thumbs.db
 data/uploads/*
 data/processed/*
 data/vectorstore/*
+
+.chroma/
+__pycache__/
+*.pyc
