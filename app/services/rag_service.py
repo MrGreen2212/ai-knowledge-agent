@@ -186,6 +186,15 @@ class RAGService:
         return results
 
     @staticmethod
+    def _distance_to_semantic_relevance(distance: float) -> float:
+        """
+        Преобразует cosine distance из Chroma в semantic relevance.
+
+        Chroma возвращает distance: меньше = лучше.
+        Для Hybrid Search нужна relevance: больше = лучше.
+        """
+        return 1.0 / (1.0 + distance)
+    @staticmethod
     def _rank_based_semantic_relevance(semantic_results: List[dict]) -> dict:
         """
         Преобразует semantic search результаты (Chroma cosine distance,
@@ -282,14 +291,19 @@ class RAGService:
         for result_index, result in enumerate(search_results, 1):
             metadata = result.get("metadata", {}) or {}
             preview = str(result.get("text", ""))[:300].replace("\n", " ")
+
             logger.info(
                 "RAG DIAGNOSTIC result[%d]: document_id=%s, object_name=%s, "
-                "chunk_index=%s, distance=%s, text_preview=%r",
+                "chunk_index=%s, distance=%s, semantic_relevance=%s, "
+                "lexical_relevance=%s, hybrid_score=%s, text_preview=%r",
                 result_index,
                 metadata.get("document_id"),
                 metadata.get("object_name"),
                 metadata.get("chunk_index"),
                 result.get("score"),
+                metadata.get("semantic_relevance"),
+                metadata.get("lexical_relevance"),
+                metadata.get("hybrid_score"),
                 preview,
             )
 
@@ -340,6 +354,10 @@ class RAGService:
             chunks_used += 1
 
         context = "\n\n".join(context_parts)
+        logger.info(
+            "RAG DIAGNOSTIC CONTEXT:\n%s",
+            context,
+        )
         context_time = time.time() - context_start
         context_tokens_approx = len(context) // 4
         context_document_ids = [
@@ -438,7 +456,10 @@ class RAGService:
 Инструкции:
 - Отвечай только на основе предоставленного контекста
 - Учитывай историю диалога для понимания контекста вопроса
-- Если в контексте нет информации для ответа, честно скажи об этом
+- Не используй собственные знания, даже если ты знаешь ответ на вопрос
+- Не дополняй ответ информацией, которой нет в контексте
+- Если в контексте нет достаточной информации для ответа, ответь: "В предоставленных документах нет информации для ответа на этот вопрос."
+- Учитывай историю диалога только для понимания контекста вопроса
 - Будь точным и конкретным
 - Используй информацию из всех релевантных документов
 - Отвечай на русском языке

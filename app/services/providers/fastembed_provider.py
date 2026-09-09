@@ -20,13 +20,13 @@ class FastEmbedProvider(EmbeddingProvider):
     """
     FastEmbed реализация EmbeddingProvider.
 
-    Использует FastEmbed с моделью sentence-transformers/all-MiniLM-L6-v2
+    Использует FastEmbed с моделью BAAI/bge-small-en-v1.5
     для создания векторных представлений текста.
     Реализует интерфейс EmbeddingProvider, следуя принципу Liskov Substitution Principle (LSP).
     """
 
     def __init__(
-        self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2", device: str = "cpu"
+        self, model_name: str = "BAAI/bge-small-en-v1.5", device: str = "cpu"
     ):
         """
         Инициализирует FastEmbed провайдер.
@@ -63,7 +63,7 @@ class FastEmbedProvider(EmbeddingProvider):
             EmbeddingGenerationError: Если произошла ошибка при создании эмбеддингов
         """
         try:
-            embeddings = list(self.model.embed(texts))
+            embeddings = list(self.model.embed(texts, batch_size=16))
             logger.debug(f"Generated embeddings for {len(texts)} texts")
             return [emb.tolist() for emb in embeddings]
         except Exception as e:
