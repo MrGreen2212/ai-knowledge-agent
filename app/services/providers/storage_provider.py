@@ -6,22 +6,22 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 class StorageProvider(ABC):
     """
     Абстрактный базовый класс для Storage провайдеров.
-    
+
     Определяет минимальный контракт для работы с файловыми хранилищами.
     Любая реализация (MinIO, S3, Azure Blob, etc.) должна реализовать этот интерфейс.
-    
+
     Принципы:
     - Interface Segregation Principle: минимальный необходимый интерфейс
     - Dependency Inversion Principle: зависимость от абстракции, а не от конкретной реализации
     - Open/Closed Principle: открыт для расширения (новые провайдеры), закрыт для модификации
     """
-    
+
     @abstractmethod
     def upload_file(
         self,
@@ -31,12 +31,12 @@ class StorageProvider(ABC):
     ) -> Dict[str, Any]:
         """
         Загружает файл в хранилище.
-        
+
         Args:
             file_data: Содержимое файла в байтах
             original_filename: Оригинальное имя файла
             content_type: MIME-тип файла
-            
+
         Returns:
             Словарь с информацией о загруженном файле:
             - status: статус операции
@@ -44,24 +44,28 @@ class StorageProvider(ABC):
             - object_name: имя объекта в хранилище
             - original_filename: оригинальное имя файла
             - size: размер файла в байтах
-            
+
         Raises:
             FileUploadError: Если произошла ошибка при загрузке файла
         """
         pass
-    
+
     @abstractmethod
     def get_file(self, object_name: str) -> bytes:
         """
         Скачивает файл из хранилища.
-        
+
         Args:
             object_name: Имя объекта в хранилище
-            
+
         Returns:
             Содержимое файла в байтах
-            
+
         Raises:
             FileDownloadError: Если произошла ошибка при скачивании файла
         """
         pass
+
+    def delete_file(self, object_name: str) -> None:
+        """Удаляет объект из хранилища."""
+        raise NotImplementedError

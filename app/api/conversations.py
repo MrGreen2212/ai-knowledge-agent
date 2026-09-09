@@ -44,19 +44,19 @@ def chat(
 ):
     """
     Создает новый диалог или продолжает существующий.
-    
+
     Если conversation_id не указан, создается новый диалог.
     Если conversation_id указан, используется существующий диалог.
-    
+
     Args:
         request: Запрос с вопросом и параметрами
         db: SQLAlchemy сессия
         conversation_service: Сервис для работы с диалогами
         rag_service: Сервис для генерации ответов
-        
+
     Returns:
         ChatResponse с conversation_id и ответом
-        
+
     Raises:
         HTTPException 404: Если указанный диалог не найден
         HTTPException 422: Если вопрос пустой
@@ -64,7 +64,7 @@ def chat(
     """
     try:
         logger.info(f"Chat request: conversation_id={request.conversation_id}")
-        
+
         result = conversation_service.chat(
             db=db,
             rag_service=rag_service,
@@ -73,9 +73,9 @@ def chat(
             top_k=request.top_k,
             max_tokens=request.max_tokens,
         )
-        
+
         return ChatResponse(**result)
-        
+
     except ValueError as e:
         logger.error(f"Conversation not found: {e}")
         raise HTTPException(
@@ -108,15 +108,15 @@ def list_conversations(
 ):
     """
     Получает список всех диалогов.
-    
+
     Диалоги отсортированы по updated_at (новые первыми).
-    
+
     Args:
         limit: Максимальное количество записей (default: 100)
         offset: Смещение для пагинации (default: 0)
         db: SQLAlchemy сессия
         conversation_service: Сервис для работы с диалогами
-        
+
     Returns:
         Список диалогов без сообщений
     """
@@ -126,9 +126,9 @@ def list_conversations(
             limit=limit,
             offset=offset,
         )
-        
+
         return [ConversationListResponse.from_orm(conv) for conv in conversations]
-        
+
     except Exception as e:
         logger.error(f"Failed to list conversations: {e}")
         raise HTTPException(
@@ -155,17 +155,17 @@ def get_conversation(
 ):
     """
     Получает информацию о диалоге с сообщениями.
-    
+
     Сообщения отсортированы по created_at (старые первыми).
-    
+
     Args:
         conversation_id: UUID диалога
         db: SQLAlchemy сессия
         conversation_service: Сервис для работы с диалогами
-        
+
     Returns:
         Полная информация о диалоге с сообщениями
-        
+
     Raises:
         HTTPException 404: Если диалог не найден
     """
@@ -174,28 +174,31 @@ def get_conversation(
             db=db,
             conversation_id=conversation_id,
         )
-        
+
         if conversation is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Conversation with id {conversation_id} not found",
             )
-        
+
         # Получить сообщения
         messages = conversation_service.get_messages(
             db=db,
             conversation_id=conversation_id,
         )
-        
+
         # Создать response с сообщениями
-        return ConversationResponse(
-            id=conversation.id,
-            title=conversation.title,
-            created_at=conversation.created_at,
-            updated_at=conversation.updated_at,
-            messages=messages,
+        # Используем model_validate для корректной конвертации ORM -> Pydantic
+        return ConversationResponse.model_validate(
+            {
+                "id": conversation.id,
+                "title": conversation.title,
+                "created_at": conversation.created_at,
+                "updated_at": conversation.updated_at,
+                "messages": messages,
+            }
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -222,14 +225,14 @@ def delete_conversation(
 ):
     """
     Удаляет диалог и все его сообщения.
-    
+
     Благодаря CASCADE в ForeignKey, все сообщения удаляются автоматически.
-    
+
     Args:
         conversation_id: UUID диалога
         db: SQLAlchemy сессия
         conversation_service: Сервис для работы с диалогами
-        
+
     Raises:
         HTTPException 404: Если диалог не найден
     """
@@ -238,13 +241,13 @@ def delete_conversation(
             db=db,
             conversation_id=conversation_id,
         )
-        
+
         if not deleted:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Conversation with id {conversation_id} not found",
             )
-        
+
     except HTTPException:
         raise
     except Exception as e:

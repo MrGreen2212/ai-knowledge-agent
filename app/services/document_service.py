@@ -1,6 +1,6 @@
 import logging
 from typing import Any, Dict
-
+from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.repositories.document_repository import DocumentRepository
@@ -55,3 +55,26 @@ class DocumentService:
             "status": "uploaded",
             "size": document_in_db.size,
         }
+
+    def list_documents(
+        self,
+        db: Session,
+        limit: int = 100,
+        offset: int = 0,
+        ):
+        """Возвращает список документов из PostgreSQL."""
+        return self.repository.list(
+            db=db,
+            limit=limit,
+            offset=offset,
+        )
+    def get_document(
+        self,
+        db: Session,
+        document_id: UUID,
+    ):
+        """Возвращает документ по ID из PostgreSQL."""
+        return self.repository.get_by_id(
+            db=db,
+            document_id=document_id,
+        )

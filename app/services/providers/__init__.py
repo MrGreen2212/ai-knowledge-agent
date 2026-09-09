@@ -10,14 +10,14 @@ Providers package - абстракции для внешних сервисов.
 Следует принципам Clean Architecture и SOLID.
 """
 
-from .llm_provider import LLMProvider
-from .ollama_provider import OllamaProvider
+from .chroma_provider import ChromaProvider
 from .embedding_provider import EmbeddingProvider
 from .fastembed_provider import FastEmbedProvider
-from .vector_store_provider import VectorStoreProvider
-from .chroma_provider import ChromaProvider
-from .storage_provider import StorageProvider
+from .llm_provider import LLMProvider
 from .minio_provider import MinIOProvider
+from .ollama_provider import OllamaProvider
+from .storage_provider import StorageProvider
+from .vector_store_provider import VectorStoreProvider
 
 __all__ = [
     "LLMProvider",

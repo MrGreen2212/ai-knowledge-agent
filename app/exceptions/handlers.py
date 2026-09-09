@@ -6,6 +6,7 @@ from app.exceptions.document import (
     DocumentProcessingError,
 )
 from app.exceptions.providers import (
+    StorageDeleteError,
     StorageDownloadError,
     StorageUploadError,
 )
@@ -27,6 +28,19 @@ async def upload_error_handler(
 async def download_error_handler(
     request: Request,
     exc: StorageDownloadError,
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "error": str(exc),
+        },
+    )
+
+
+async def delete_error_handler(
+    request: Request,
+    exc: StorageDeleteError,
 ) -> JSONResponse:
     return JSONResponse(
         status_code=500,
@@ -68,20 +82,25 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     app.add_exception_handler(
         StorageUploadError,
-        upload_error_handler, # type: ignore
+        upload_error_handler,  # type: ignore
     )
 
     app.add_exception_handler(
         StorageDownloadError,
-        download_error_handler, # type: ignore
+        download_error_handler,  # type: ignore
+    )
+
+    app.add_exception_handler(
+        StorageDeleteError,
+        delete_error_handler,  # type: ignore
     )
 
     app.add_exception_handler(
         DocumentNotFound,
-        document_not_found_handler, # type: ignore
+        document_not_found_handler,  # type: ignore
     )
 
     app.add_exception_handler(
         DocumentProcessingError,
-        document_processing_handler, # type: ignore
+        document_processing_handler,  # type: ignore
     )

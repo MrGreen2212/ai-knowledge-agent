@@ -6,22 +6,22 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Sequence, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 
 class VectorStoreProvider(ABC):
     """
     Абстрактный базовый класс для Vector Store провайдеров.
-    
+
     Определяет минимальный контракт для работы с векторными базами данных.
     Любая реализация (Chroma, Pinecone, Weaviate, etc.) должна реализовать этот интерфейс.
-    
+
     Принципы:
     - Interface Segregation Principle: минимальный необходимый интерфейс
     - Dependency Inversion Principle: зависимость от абстракции, а не от конкретной реализации
     - Open/Closed Principle: открыт для расширения (новые провайдеры), закрыт для модификации
     """
-    
+
     @abstractmethod
     def add_documents(
         self,
@@ -32,27 +32,27 @@ class VectorStoreProvider(ABC):
     ) -> None:
         """
         Добавляет документы в векторное хранилище.
-        
+
         Args:
             texts: Список текстов документов
             embeddings: Список векторных представлений
             ids: Список уникальных идентификаторов
             metadatas: Список метаданных для каждого документа (опционально)
-            
+
         Raises:
             VectorStoreProviderError: Если произошла ошибка при добавлении документов
         """
         pass
-    
+
     @abstractmethod
     def query(self, embedding: List[float], limit: int = 5) -> List[Dict[str, Any]]:
         """
         Выполняет поиск по векторному представлению.
-        
+
         Args:
             embedding: Векторное представление запроса
             limit: Максимальное количество результатов
-            
+
         Returns:
             Список найденных документов с метаданными и оценками релевантности
             Каждый элемент должен содержать:
@@ -60,7 +60,30 @@ class VectorStoreProvider(ABC):
             - score: оценка релевантности
             - text: текст документа
             - metadata: метаданные документа
-            
+
+        Raises:
+            VectorStoreProviderError: Если произошла ошибка при поиске
+        """
+        pass
+
+    @abstractmethod
+    def lexical_search(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+        """
+        Выполняет лексический (полнотекстовый) поиск по точным/префиксным
+        совпадениям токенов запроса в тексте документов.
+
+        Args:
+            query: Текст поискового запроса
+            limit: Максимальное количество результатов
+
+        Returns:
+            Список найденных документов с метаданными и оценками релевантности
+            Каждый элемент должен содержать:
+            - id: уникальный идентификатор
+            - score: оценка релевантности
+            - text: текст документа
+            - metadata: метаданные документа
+
         Raises:
             VectorStoreProviderError: Если произошла ошибка при поиске
         """

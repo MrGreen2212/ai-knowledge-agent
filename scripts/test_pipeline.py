@@ -1,6 +1,7 @@
 from app.core.dependencies import get_rag_service
 
 OBJECT_NAME = "9047339c-0557-45f8-a7d8-a81ff3aa7442.pdf"
+DOCUMENT_ID = "document-id-for-test"
 
 
 def main():
@@ -13,7 +14,10 @@ def main():
 
     if INDEX_DOCUMENT:
         print(f"\n🔥 Индексация документа {OBJECT_NAME}...")
-        rag.process_document(OBJECT_NAME)
+        rag.process_document(
+            object_name=OBJECT_NAME,
+            document_id=DOCUMENT_ID,
+        )
 
     while True:
 

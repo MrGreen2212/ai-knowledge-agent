@@ -25,3 +25,8 @@ data/vectorstore/*
 .chroma/
 __pycache__/
 *.pyc
+# Test coverage
+.coverage
+
+# Temporary analysis files
+_before_cleanup.patch

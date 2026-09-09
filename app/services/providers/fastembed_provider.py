@@ -9,7 +9,8 @@ from typing import List
 
 from fastembed import TextEmbedding as TextEmbeddingModel
 
-from app.exceptions.providers import EmbeddingModelLoadError, EmbeddingGenerationError
+from app.exceptions.providers import EmbeddingGenerationError, EmbeddingModelLoadError
+
 from .embedding_provider import EmbeddingProvider
 
 logger = logging.getLogger(__name__)
@@ -18,20 +19,22 @@ logger = logging.getLogger(__name__)
 class FastEmbedProvider(EmbeddingProvider):
     """
     FastEmbed реализация EmbeddingProvider.
-    
+
     Использует FastEmbed с моделью sentence-transformers/all-MiniLM-L6-v2
     для создания векторных представлений текста.
     Реализует интерфейс EmbeddingProvider, следуя принципу Liskov Substitution Principle (LSP).
     """
 
-    def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2", device: str = "cpu"):
+    def __init__(
+        self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2", device: str = "cpu"
+    ):
         """
         Инициализирует FastEmbed провайдер.
-        
+
         Args:
             model_name: Название модели для создания эмбеддингов
             device: Устройство для вычислений ('cpu' или 'cuda')
-            
+
         Raises:
             EmbeddingModelLoadError: Если не удалось загрузить модель
         """
@@ -49,13 +52,13 @@ class FastEmbedProvider(EmbeddingProvider):
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         """
         Создает эмбеддинги для списка текстов.
-        
+
         Args:
             texts: Список текстов для создания эмбеддингов
-            
+
         Returns:
             Список векторов (эмбеддингов) для каждого текста
-            
+
         Raises:
             EmbeddingGenerationError: Если произошла ошибка при создании эмбеддингов
         """
@@ -70,19 +73,19 @@ class FastEmbedProvider(EmbeddingProvider):
     def embed_query(self, text: str) -> List[float]:
         """
         Создает эмбеддинг для одного текста (запроса).
-        
+
         Args:
             text: Текст для создания эмбеддинга
-            
+
         Returns:
             Вектор (эмбеддинг) текста
-            
+
         Raises:
             EmbeddingGenerationError: Если произошла ошибка при создании эмбеддинга
         """
         try:
-            embedding = next(self.model.embed([text]))
-            return embedding.tolist()
+            embedding_array = next(self.model.embed([text]))  # type: ignore[call-overload]
+            return embedding_array.tolist()  # type: ignore[no-any-return]
         except Exception as e:
             logger.error(f"Failed to create query embedding: {e}")
             raise EmbeddingGenerationError(f"Ошибка при создании эмбеддинга запроса: {e}")

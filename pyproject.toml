@@ -1,0 +1,16 @@
+[tool.black]
+line-length = 100
+include = '\.pyi?$'
+extend-exclude = '''/(
+    \.git
+  | \.venv
+  | __pycache__
+  | alembic
+  | data
+  | docker
+)/'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_glob = ["*/alembic/*", "*/data/*", "*/docker/*"]

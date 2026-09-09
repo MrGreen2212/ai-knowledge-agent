@@ -7,13 +7,19 @@ MinIO реализация StorageProvider.
 import logging
 import uuid
 from io import BytesIO
-from typing import Dict, Any, IO
+from typing import Any, Dict, Optional
 
 from minio import Minio
 from minio.error import S3Error
 
 from app.core.config import settings
-from app.exceptions.providers import StorageConnectionError, StorageUploadError, StorageDownloadError
+from app.exceptions.providers import (
+    StorageConnectionError,
+    StorageDeleteError,
+    StorageDownloadError,
+    StorageUploadError,
+)
+
 from .storage_provider import StorageProvider
 
 logger = logging.getLogger(__name__)
@@ -22,29 +28,29 @@ logger = logging.getLogger(__name__)
 class MinIOProvider(StorageProvider):
     """
     MinIO реализация StorageProvider.
-    
+
     Использует MinIO для хранения и получения файлов.
     Реализует интерфейс StorageProvider, следуя принципу Liskov Substitution Principle (LSP).
     """
 
     def __init__(
         self,
-        endpoint: str = None,
-        access_key: str = None,
-        secret_key: str = None,
-        bucket_name: str = None,
+        endpoint: Optional[str] = None,
+        access_key: Optional[str] = None,
+        secret_key: Optional[str] = None,
+        bucket_name: Optional[str] = None,
         secure: bool = False,
     ):
         """
         Инициализирует MinIO провайдер.
-        
+
         Args:
             endpoint: Адрес MinIO сервера
             access_key: Ключ доступа
             secret_key: Секретный ключ
             bucket_name: Название бакета
             secure: Использовать ли HTTPS
-            
+
         Raises:
             StorageConnectionError: Если не удалось инициализировать MinIO
         """
@@ -79,16 +85,17 @@ class MinIOProvider(StorageProvider):
         content_type: str,
     ) -> Dict[str, Any]:
         """
-        Загружает файл в MinIO.
         
+        Загружает файл в MinIO.
+
         Args:
             file_data: Содержимое файла в байтах
             original_filename: Оригинальное имя файла
             content_type: MIME-тип файла
-            
+
         Returns:
             Словарь с информацией о загруженном файле
-            
+
         Raises:
             StorageUploadError: Если произошла ошибка при загрузке файла
         """
@@ -124,20 +131,18 @@ class MinIOProvider(StorageProvider):
     def get_file(self, object_name: str) -> bytes:
         """
         Скачивает файл из MinIO.
-        
+
         Args:
             object_name: Имя объекта в хранилище
-            
+
         Returns:
             Содержимое файла в байтах
-            
+
         Raises:
             StorageDownloadError: Если произошла ошибка при скачивании файла
         """
         try:
-            response: IO[bytes] = self.client.get_object(
-                bucket_name=self.bucket_name, object_name=object_name
-            )
+            response = self.client.get_object(bucket_name=self.bucket_name, object_name=object_name)
 
             file_data: bytes = response.read()
             response.close()
@@ -149,4 +154,18 @@ class MinIOProvider(StorageProvider):
             logger.error(f"Failed to retrieve file: {object_name}")
             raise StorageDownloadError(
                 f"Не удалось получить файл '{object_name}' из хранилища."
+            ) from err
+
+    def delete_file(self, object_name: str) -> None:
+        """Удаляет объект из MinIO."""
+        try:
+            self.client.remove_object(
+                bucket_name=self.bucket_name,
+                object_name=object_name,
+            )
+            logger.info(f"File deleted: {object_name}")
+        except S3Error as err:
+            logger.error(f"Failed to delete file: {object_name}")
+            raise StorageDeleteError(
+                f"Не удалось удалить файл '{object_name}' из хранилища."
             ) from err

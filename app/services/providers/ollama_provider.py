@@ -6,12 +6,13 @@ Ollama реализация LLMProvider.
 
 import logging
 import time
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import requests
 
 from app.core.config import settings
-from app.exceptions.providers import LLMGenerationError, LLMConnectionError, LLMTimeoutError
+from app.exceptions.providers import LLMConnectionError, LLMGenerationError, LLMTimeoutError
+
 from .llm_provider import LLMProvider
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 class OllamaProvider(LLMProvider):
     """
     Ollama реализация LLMProvider.
-    
+
     Взаимодействует с Ollama через HTTP API для генерации текста.
     Реализует интерфейс LLMProvider, следуя принципу Liskov Substitution Principle (LSP).
     """
@@ -28,7 +29,7 @@ class OllamaProvider(LLMProvider):
     def __init__(self, base_url: Optional[str] = None, model: Optional[str] = None):
         """
         Инициализирует Ollama провайдер.
-        
+
         Args:
             base_url: URL Ollama сервиса (по умолчанию из settings)
             model: Название модели (по умолчанию из settings)
@@ -40,22 +41,22 @@ class OllamaProvider(LLMProvider):
     def generate(self, prompt: str, max_tokens: int = 512) -> str:
         """
         Генерирует текст используя Ollama.
-        
+
         Args:
             prompt: Текст запроса для генерации ответа
             max_tokens: Максимальное количество токенов для генерации
-            
+
         Returns:
             Сгенерированный текст ответа от модели
-            
+
             Raises:
             LLMConnectionError: Если не удалось подключиться к Ollama
             LLMTimeoutError: Если превышено время ожидания
             LLMGenerationError: Если произошла ошибка при генерации
         """
         url = f"{self.base_url}/api/generate"
-        
-        payload = {
+
+        payload: Dict[str, Any] = {
             "model": self.model,
             "prompt": prompt,
             "stream": False,
@@ -64,8 +65,8 @@ class OllamaProvider(LLMProvider):
                 "num_predict": max_tokens,
                 "temperature": 0.1,
                 "num_ctx": 4096,
-                "num_thread": 4
-            }
+                "num_thread": 4,
+            },
         }
 
         try:
@@ -74,12 +75,12 @@ class OllamaProvider(LLMProvider):
             logger.debug(f"   Prompt length: {len(prompt)} chars")
             logger.debug(f"   Max tokens: {max_tokens}")
             logger.debug(f"   Model: {self.model}")
-            
+
             response = requests.post(url, json=payload, timeout=None)
             request_time = time.time() - request_start
-            
+
             logger.debug(f"⏱️  HTTP REQUEST TIME: {request_time:.3f} seconds")
-            
+
             # Проверка HTTP 500 и других ошибок
             if response.status_code == 500:
                 error_text = response.text[:500] if response.text else "No response body"
@@ -89,15 +90,17 @@ class OllamaProvider(LLMProvider):
                     f"Возможно, промпт слишком длинный или модель перегружена. "
                     f"Ответ сервера: {error_text}"
                 )
-            
+
             response.raise_for_status()
 
             parse_start = time.time()
-            result = response.json()
+            result: Any = response.json()
             parse_time = time.time() - parse_start
-            
+
             generated_text = result.get("response", "")
-            
+
+            if not isinstance(generated_text, str):
+                raise LLMGenerationError("Ollama вернул некорректный формат поля 'response'.")
             # Дополнительная статистика из Ollama
             total_duration = result.get("total_duration", 0) / 1e9  # наносекунды в секунды
             load_duration = result.get("load_duration", 0) / 1e9
@@ -105,15 +108,17 @@ class OllamaProvider(LLMProvider):
             prompt_eval_duration = result.get("prompt_eval_duration", 0) / 1e9
             eval_count = result.get("eval_count", 0)
             eval_duration = result.get("eval_duration", 0) / 1e9
-            
+
             logger.debug(f"⏱️  JSON PARSE TIME: {parse_time:.3f} seconds")
-            logger.debug(f"\n📊 OLLAMA INTERNAL STATS:")
+            logger.debug("\n📊 OLLAMA INTERNAL STATS:")
             logger.debug(f"   Total duration:        {total_duration:.3f}s")
             logger.debug(f"   Model load duration:   {load_duration:.3f}s")
             logger.debug(f"   Prompt eval tokens:    {prompt_eval_count}")
             logger.debug(f"   Prompt eval duration:  {prompt_eval_duration:.3f}s")
             if prompt_eval_count > 0:
-                logger.debug(f"   Prompt eval speed:     {prompt_eval_count/prompt_eval_duration:.1f} tokens/s")
+                logger.debug(
+                    f"   Prompt eval speed:     {prompt_eval_count/prompt_eval_duration:.1f} tokens/s"
+                )
             logger.debug(f"   Response tokens:       {eval_count}")
             logger.debug(f"   Response duration:     {eval_duration:.3f}s")
             if eval_count > 0:

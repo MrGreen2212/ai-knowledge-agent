@@ -1,3 +1,45 @@
-from .storage import *
-from .document import *
-from .providers import *
+from .document import DocumentError, DocumentNotFound, DocumentProcessingError
+from .providers import (
+    EmbeddingGenerationError,
+    EmbeddingModelLoadError,
+    EmbeddingProviderError,
+    LLMConnectionError,
+    LLMGenerationError,
+    LLMProviderError,
+    LLMTimeoutError,
+    ProviderError,
+    StorageConnectionError,
+    StorageDownloadError,
+    StorageProviderError,
+    StorageUploadError,
+    VectorStoreConnectionError,
+    VectorStoreInsertError,
+    VectorStoreProviderError,
+    VectorStoreQueryError,
+)
+from .storage import FileDownloadError, FileUploadError, StorageError
+
+__all__ = [
+    "DocumentError",
+    "DocumentNotFound",
+    "DocumentProcessingError",
+    "ProviderError",
+    "LLMProviderError",
+    "LLMGenerationError",
+    "LLMConnectionError",
+    "LLMTimeoutError",
+    "EmbeddingProviderError",
+    "EmbeddingGenerationError",
+    "EmbeddingModelLoadError",
+    "VectorStoreProviderError",
+    "VectorStoreConnectionError",
+    "VectorStoreQueryError",
+    "VectorStoreInsertError",
+    "StorageProviderError",
+    "StorageConnectionError",
+    "StorageUploadError",
+    "StorageDownloadError",
+    "StorageError",
+    "FileUploadError",
+    "FileDownloadError",
+]

@@ -48,7 +48,7 @@ class TextExtractionService:
             process = getattr(docx2txt, "process", None)
 
             if process:
-                text = process(io.BytesIO(file_data))
+                text: str = process(io.BytesIO(file_data))
                 logger.debug(f"Extracted {len(text)} characters from DOCX")
                 return text
 

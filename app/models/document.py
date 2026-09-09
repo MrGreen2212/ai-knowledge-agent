@@ -1,11 +1,12 @@
 from sqlalchemy import (
-    Column,
-    String,
+    ARRAY,  # Добавлено для массива эмбеддинга
     BigInteger,
+    Column,
     DateTime,
-    Text,                     # Добавлено для хранения текста документа
-    ARRAY                    # Добавлено для массива эмбеддинга
+    String,
+    Text,  # Добавлено для хранения текста документа
 )
+
 # Импортируем специфичные типы именно из диалекта postgresql
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, UUID
 from sqlalchemy.sql import func  # <--- ДОБАВИЛИ ЭТОТ ИМПОРТ
@@ -17,8 +18,9 @@ class Document(Base):
     __tablename__ = "documents"
 
     id = Column(
-        UUID(as_uuid=True), primary_key=True,
-        server_default="gen_random_uuid()"  # Используем строковое выражение
+        UUID(as_uuid=True),
+        primary_key=True,
+        server_default="gen_random_uuid()",  # Используем строковое выражение
     )
 
     filename = Column(String(255), nullable=False)
@@ -34,8 +36,6 @@ class Document(Base):
     text = Column(Text)  # Полный текст файла или чанка текста
 
     # Векторные данные
-    embedding = Column( # type: ignore
-        ARRAY(DOUBLE_PRECISION(precision=53)), # type: ignore
-        index=False,
-        nullable=True
+    embedding = Column(  # type: ignore
+        ARRAY(DOUBLE_PRECISION(precision=53)), index=False, nullable=True  # type: ignore
     )
